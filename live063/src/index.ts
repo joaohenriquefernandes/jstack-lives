@@ -1,46 +1,31 @@
-import { randomUUID } from 'crypto';
-import Fastify, {type FastifyRequest} from 'fastify'
+import Fastify, { FastifyRequest } from 'fastify';
+import { routes } from './routes';
 
-const fastify = Fastify()
+const fastify = Fastify();
+fastify.register(routes, { public: false });
 
-type Request = FastifyRequest<{
-  Body: {name: string};
-  Headers: {org: string};
-  Params: {id: string};
-  Querystring: {page: string};
-  Reply: {
-    201: {
-      id: string
-    },
-    '4xx': {
-      message: string
-    }
-  }
-}>
+fastify.decorate('sendAnalytics', (request: FastifyRequest) => {
+  console.log(`> Saving data for request #${request.id}`);
+});
 
-fastify.post('/teste/:id', async (request: Request, reply) => {
-  const {body, headers, params, query} = request
+fastify.decorate('serverVersion', '0.0.10');
 
-  if(!body.name) {
-    return reply.code(400).send({message: 'Name is required.'})
-  }
-
-  return reply.code(201).send({
-    id: randomUUID()
-  })
-})
+fastify.setErrorHandler((error, request, reply) => {
+  console.log(error);
+  return reply.code(500).send({ error: 'Internal server error.' });
+});
 
 async function main() {
   try {
     const host = await fastify.listen({
       port: 3000,
       host: '0.0.0.0'
-    })
+    });
 
-    console.log(`> Server started at ${host}`)
+    console.log(`> Server started at ${host}`);
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
 }
 
-main()
+main();
