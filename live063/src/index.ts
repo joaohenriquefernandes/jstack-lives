@@ -1,14 +1,13 @@
 import Fastify, { FastifyRequest } from 'fastify';
 import { routes } from './routes';
+import { sendAnalytics } from './plugins/sendAnalytics';
+import { serverVersion } from './plugins/serverVersion';
 
 const fastify = Fastify();
 fastify.register(routes, { public: false });
 
-fastify.decorate('sendAnalytics', (request: FastifyRequest) => {
-  console.log(`> Saving data for request #${request.id}`);
-});
-
-fastify.decorate('serverVersion', '0.0.10');
+fastify.register(sendAnalytics);
+fastify.register(serverVersion);
 
 fastify.setErrorHandler((error, request, reply) => {
   console.log(error);
